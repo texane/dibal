@@ -1,0 +1,38 @@
+. pwm
+ . encode an analog signal by the means of a serie of low / high pulses
+  . duty cycle is the amount of time the signal is logical one
+  . in practice, the modulating frequency must be high enough regarding
+  the load response time (for instance, a light bulb switching on off during
+  5 seconds is way too long)
+  . to achieve such (relatively) high frequencies, pwm modules
+  . lookup tables to associate between duty cycles and actual reactions
+ . http://www.embedded.com/story/OEG20010821S0096
+
+. pwm in pic18f4550
+ . implemented by the ccp module
+ . according to ccp mode, pwm used
+ . duty cycle on 10 bits
+ . 
+
+. code
+ . tasks
+  . sensor, send message to decider
+  . decider, takes a decision according to the current state
+  . actuator: servo
+  . advantage of the design
+   . sensors can continue working while the decision takes place
+   . decider can prepare a decision without waiting for the actuator to finish
+    . is this necessary?
+
+
+. todos
+ . use pwm to drive servo
+ . why is there a crash at ~20second usage
+ . ultraound sensor code
+ . noise sensor
+ . light sensor
+ . on/off button on the side
+ . solar panel
+ . sleep mode
+ . think about power distribution
+ . accoustic communication
