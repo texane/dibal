@@ -7,12 +7,27 @@
   . to achieve such (relatively) high frequencies, pwm modules
   . lookup tables to associate between duty cycles and actual reactions
  . http://www.embedded.com/story/OEG20010821S0096
+ . actually, pwm can be seen as a module outputing square waves to represent an analog value
 
 . pwm in pic18f4550
  . implemented by the ccp module
+ . 2 ccp modules
  . according to ccp mode, pwm used
  . duty cycle on 10 bits
- . 
+ . 2 registers: control, data (16bits)
+ . ccp uses timer2 when in pwm mode
+ . 2 ccp modules configured in the same mode share the same timer
+
+ . 2 things when programming the pwm
+  . a period
+  . a duty cycle
+ . a full cycle is as follow
+  . {tmr2 = pr2}{tmr2 = duty_cycle} {tmr2 = pr2}...
+
+. servo
+ . http://www.lextronic.fr/P1844-servomoteur-a-rotation-continue.html
+ . http://www.planete-sciences.org/forums/viewtopic.php?f=5&t=11807
+ . 900 - 1500us/CCW, 1500us/Stop, 1500-2100us/   
 
 . code
  . tasks

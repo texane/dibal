@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Sep 26 13:23:18 2009 texane
-** Last update Sat Sep 26 14:12:05 2009 texane
+** Last update Sat Sep 26 23:26:57 2009 texane
 */
 
 
@@ -12,12 +12,22 @@
 
 
 
+/* hitech hsr-1422CR continuous rotation servo */
+
+#define SERVO_DUTY_MIN_MS 1 /* backward */
+#define SERVO_DUTY_NEUTRAL_MS 1.5 /* 0 position */
+#define SERVO_DUTY_MAX_MS 2 /* forward */
+
+#define SERVO_PERIOD_MS 2
+
+#define DUTY_MS_TO_CYCLES()
+
+
+
 /* bits */
 
 static unsigned char make_mask(servo_t* servo)
 {
-/*   return (1 << 7) >> servo->shift; */
-
   return 1 << servo->shift;
 }
 
