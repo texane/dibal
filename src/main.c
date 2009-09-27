@@ -2,12 +2,13 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun Sep 20 14:08:30 2009 texane
-** Last update Sun Sep 27 19:51:56 2009 texane
+** Last update Sun Sep 27 21:09:24 2009 texane
 */
 
 
 
 #include <pic18fregs.h>
+#include "pwm.h"
 #include "srf04.h"
 #include "timer.h"
 #include "config.h"
@@ -214,6 +215,55 @@ static void do_wait(void)
 }
 
 
+/* motion */
+
+struct move_context
+{
+  enum move_state
+    {
+      MOVE_STATE_STOP = 0,
+      MOVE_STATE_FORWARD,
+      MOVE_STATE_BACKWARD,
+      MOVE_STATE_TURN_L,
+      MOVE_STATE_TURN_R
+    } state;
+};
+
+static void move_forward(void)
+{
+  do_pwm(1);
+  do_epwm(-1);
+}
+
+
+static void move_backward(void)
+{
+  do_pwm(-1);
+  do_epwm(1);
+}
+
+
+static void move_stop(void)
+{
+  do_pwm(0);
+  do_epwm(0);
+}
+
+
+static void move_turn_left(void)
+{
+  do_pwm(1);
+  do_epwm(1);
+}
+
+
+static void move_turn_right(void)
+{
+  do_pwm(-1);
+  do_epwm(-1);
+}
+
+
 /* main */
 
 void main(void)
@@ -223,32 +273,23 @@ void main(void)
   srf04_setup();
   serial_setup();
 
-  serial_writei(0xf00f);
-
  redo:
   {
-    unsigned int old_d = 0xa5a5;
-    unsigned int new_d;
-
     while (1)
       {
 #define MIN_DISTANCE_VALUE 0x0a00 /* 20 cms */
-
-	new_d = srf04_get_distance();
-	if (new_d != old_d)
+	if (srf04_get_distance() <= MIN_DISTANCE_VALUE)
 	  {
-	    serial_writei(new_d);
-	    old_d = new_d;
-	  }
+	    move_stop();
+	    do_wait();
 
-	if (new_d <= MIN_DISTANCE_VALUE)
-	  {
-	    turn_left();
+	    move_turn_left();
+	    do_wait();
+	    move_forward();
 	  }
 
 	do_wait();
       }
   }
   goto redo;
-
 }

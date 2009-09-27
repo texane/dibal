@@ -2,7 +2,7 @@
 ## Made by fabien le mentec <texane@gmail.com>
 ## 
 ## Started on  Sun Sep 20 00:28:27 2009 texane
-## Last update Sun Sep 27 19:41:55 2009 texane
+## Last update Sun Sep 27 20:15:14 2009 texane
 ##
 
 
@@ -39,6 +39,7 @@ LIB	:=	gplib -c
 NAME	:=	dibal.hex
 
 CSRCS	:=	../src/main.c			\
+		../src/pwm.c			\
 		../src/srf04.c			\
 		../src/timer.c			\
 		../src/serial.c
