@@ -2,7 +2,7 @@
 ## Made by fabien le mentec <texane@gmail.com>
 ## 
 ## Started on  Sun Sep 20 00:28:27 2009 texane
-## Last update Sat Sep 26 17:55:40 2009 texane
+## Last update Sun Sep 27 19:41:55 2009 texane
 ##
 
 
@@ -39,13 +39,9 @@ LIB	:=	gplib -c
 NAME	:=	dibal.hex
 
 CSRCS	:=	../src/main.c			\
-		../src/serial.c			\
-		../src/hooks.c			\
-		../src/servo.c			\
-		$(FREERTOS_SRC_DIR)/tasks.c	\
-		$(FREERTOS_SRC_DIR)/list.c	\
-		$(FREERTOS_SRC_DIR)/portable/MemMang/heap_1.c	\
-		$(FREERTOS_SRC_DIR)/portable/SDCC/PIC18F/port.c
+		../src/srf04.c			\
+		../src/timer.c			\
+		../src/serial.c
 ASRCS	:=
 
 OBJS	:=	$(CSRCS:.c=.o)			\
