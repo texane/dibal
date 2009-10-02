@@ -2,7 +2,7 @@
 ## Made by fabien le mentec <texane@gmail.com>
 ## 
 ## Started on  Sun Sep 20 00:28:27 2009 texane
-## Last update Sun Sep 27 20:15:14 2009 texane
+## Last update Fri Oct  2 15:49:04 2009 texane
 ##
 
 
@@ -40,6 +40,7 @@ NAME	:=	dibal.hex
 
 CSRCS	:=	../src/main.c			\
 		../src/pwm.c			\
+		../src/adc.c			\
 		../src/srf04.c			\
 		../src/timer.c			\
 		../src/serial.c
