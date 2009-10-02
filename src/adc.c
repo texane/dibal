@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Fri Oct  2 15:48:04 2009 texane
-** Last update Fri Oct  2 15:48:37 2009 texane
+** Last update Fri Oct  2 18:17:37 2009 texane
 */
 
 
@@ -99,5 +99,7 @@ unsigned short adc_read(unsigned char chan)
 
   ADCON0bits.ADON = 0;
 
-  return value;
+  /* 10 bits adc */
+
+  return value & 0x3ff;
 }

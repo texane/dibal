@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun Sep 20 14:08:30 2009 texane
-** Last update Fri Oct  2 15:49:43 2009 texane
+** Last update Fri Oct  2 20:32:59 2009 texane
 */
 
 
@@ -199,6 +199,9 @@ void main(void)
 
     while (1)
       {
+
+#if 0
+
 #define MIN_DISTANCE_VALUE 0x0a00 /* 20 cms */
 	if (srf04_get_distance() <= MIN_DISTANCE_VALUE)
 	  {
@@ -215,6 +218,36 @@ void main(void)
 
 	    move_forward();
 	  }
+#else
+	{
+	  unsigned short value = adc_read(0);
+
+	  /* 5 volts, 10 bits */
+#define QUANTIZE_5_10(V) ((unsigned short)(((V) * 1024.f) / 5.f))
+
+	  if (value <= QUANTIZE_5_10(2.2))
+	    {
+	      move_turn_right();
+
+	      do_wait();
+	      do_wait();
+
+	      move_stop();
+	    }
+	  else if (value >= QUANTIZE_5_10(2.8))
+	    {
+	      move_turn_left();
+
+	      do_wait();
+	      do_wait();
+
+	      move_stop();
+	    }
+	  else
+	    {
+	    }
+	}
+#endif
 	
 	do_wait();
       }
