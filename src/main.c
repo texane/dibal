@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun Sep 20 14:08:30 2009 texane
-** Last update Sat Oct  3 07:07:45 2009 texane
+** Last update Sat Oct  3 13:44:20 2009 texane
 */
 
 
@@ -58,76 +58,6 @@ static void do_wait(void)
   for (j = 0; j < 10; ++j)
     for (i = 0; i < 10000; ++i)
       ;
-}
-
-
-/* motion */
-
-struct move_context
-{
-  enum move_state
-    {
-      MOVE_STATE_STOP = 0,
-      MOVE_STATE_FORWARD,
-      MOVE_STATE_BACKWARD,
-      MOVE_STATE_TURN_L,
-      MOVE_STATE_TURN_R
-    } state;
-};
-
-
-static void move_forward(void)
-{
-#ifdef USE_SERIAL
-  serial_writei(0x00);
-#endif
-
-  do_pwm(1);
-  do_epwm(-1);
-}
-
-
-static void move_backward(void)
-{
-#ifdef USE_SERIAL
-  serial_writei(0x01);
-#endif
-
-  do_pwm(-1);
-  do_epwm(1);
-}
-
-
-static void move_stop(void)
-{
-#ifdef USE_SERIAL
-  serial_writei(0x02);
-#endif
-
-  do_pwm(0);
-  do_epwm(0);
-}
-
-
-static void move_turn_left(void)
-{
-#ifdef USE_SERIAL
-  serial_writei(0x03);
-#endif
-
-  do_pwm(1);
-  do_epwm(1);
-}
-
-
-static void move_turn_right(void)
-{
-#ifdef USE_SERIAL
-  serial_writei(0x04);
-#endif
-
-  do_pwm(-1);
-  do_epwm(-1);
 }
 
 

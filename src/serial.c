@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Mon Sep 21 08:54:27 2009 texane
-** Last update Mon Sep 21 15:16:00 2009 texane
+** Last update Sat Oct  3 10:45:52 2009 texane
 */
 
 
@@ -216,7 +216,7 @@ void serial_writeb(unsigned char b)
 }
 
 
-void serial_handle_int(void)
+void serial_handle_interrupt(void)
 {
   if (!PIR1bits.RCIF)
     return ;

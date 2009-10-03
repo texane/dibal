@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Fri Oct  2 21:28:28 2009 texane
-** Last update Sat Oct  3 10:21:19 2009 texane
+** Last update Sat Oct  3 14:05:49 2009 texane
 */
 
 
@@ -143,7 +143,7 @@ void sched_disable(void)
 }
 
 
-sched_timer_t* sched_add_timer(unsigned int freq, void (*handler)(void))
+sched_timer_t* sched_add_timer(unsigned int freq, void (*handler)(void), int is_enabled)
 {
   unsigned char prev_state;
   sched_timer_t* timer;
@@ -173,9 +173,18 @@ sched_timer_t* sched_add_timer(unsigned int freq, void (*handler)(void))
   timer->saved_countdown = timer->current_countdown;
   timer->handler = handler;
 
-  TIMER_SET_FLAG(timer, IS_ENABLED);
+  if (is_enabled)
+    TIMER_SET_FLAG(timer, IS_ENABLED);
 
   return timer;
+}
+
+
+void sched_del_timer(sched_timer_t* timer)
+{
+  /* todo: locking */
+
+  TIMER_CLEAR_FLAG(timer, IS_ALLOCATED);
 }
 
 
@@ -188,6 +197,12 @@ void sched_enable_timer(sched_timer_t* timer)
 void sched_disable_timer(sched_timer_t* timer)
 {
   TIMER_CLEAR_FLAG(timer, IS_ENABLED);
+}
+
+
+void sched_reset_timer(sched_timer_t* timer)
+{
+  timer->current_countdown = timer->saved_countdown;
 }
 
 
@@ -221,18 +236,23 @@ void sched_handle_interrupt(void)
 
 
 
-#if 1 /* unit testing */
+#if 0 /* unit testing */
 
 
 #include <pic18fregs.h>
 #include "config.h"
+#include "serial.h"
 #include "int.h"
 
 
 
+static volatile unsigned char led0_signal;
+
 static void led0_handler(void)
 {
   static unsigned char n = 0;
+
+  led0_signal = 1;
 
   TRISAbits.TRISA0 = 0;
   LATAbits.LATA0 = n;
@@ -270,6 +290,8 @@ void main(void)
   osc_setup();
   int_setup();
 
+  serial_setup();
+
   sched_setup();
 
   timers[0] = sched_add_timer( 1, led0_handler );
@@ -281,19 +303,16 @@ void main(void)
   sched_enable();
 
   {
-    unsigned char l = 0;
+    unsigned int i = 0;
 
   redo:
 
-#if 0
-    {
-      unsigned int i;
-      for (i = 0; i < 10000; ++i)
-	;
-    }
-    l ^= 1;
-    LATAbits.LATA0 = l;
-#endif
+    while (!led0_signal)
+      ;
+
+    led0_signal = 0;
+
+    serial_writei(i++);
 
     goto redo;
   }

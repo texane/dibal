@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Oct  3 07:05:54 2009 texane
-** Last update Sat Oct  3 09:15:12 2009 texane
+** Last update Sat Oct  3 10:47:12 2009 texane
 */
 
 
@@ -11,6 +11,10 @@
 
 #ifdef CONFIG_ENABLE_SCHED
 # include "sched.h"
+#endif
+
+#ifdef CONFIG_ENABLE_SERIAL
+# include "serial.h"
 #endif
 
 #ifdef CONFIG_ENABLE_TIMER
@@ -38,6 +42,10 @@ void on_low_interrupt(void) __interrupt 2
 
 #ifdef CONFIG_ENABLE_TIMER
   timer_handle_interrupt();
+#endif
+
+#ifdef CONFIG_ENABLE_SERIAL
+  serial_handle_interrupt();
 #endif
 }
 
