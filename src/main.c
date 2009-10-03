@@ -2,47 +2,21 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun Sep 20 14:08:30 2009 texane
-** Last update Fri Oct  2 20:32:59 2009 texane
+** Last update Sat Oct  3 07:07:45 2009 texane
 */
 
 
 
 #include <pic18fregs.h>
+#include "config.h"
+#include "int.h"
+#include "osc.h"
 #include "pwm.h"
 #include "srf04.h"
 #include "timer.h"
-#include "config.h"
 #include "serial.h"
 #include "adc.h"
 
-
-
-/* oscillator */
-
-static void osc_setup(void)
-{
-  /* 8Mhz
-   */
-
-  OSCCONbits.IRCF = 7;
-
-  /* internal osc used
-   */
-
-  OSCCONbits.SCS = 2;
-
-  /* idle mode enable so that peripherals are
-     clocked with SCS when cpu is sleeping.
-   */
-
-  OSCCONbits.IDLEN = 1;
-
-  /* wait for stable freq
-   */
-
-  while (!OSCCONbits.IOFS)
-    ;
-}
 
 
 #if 0 /* event handling */
@@ -74,29 +48,6 @@ static void on_event(struct event* event)
 }
 
 #endif
-
-
-/* interrupt */
-
-void on_low_interrupt(void) __interrupt 2;
-
-
-void on_low_interrupt(void) __interrupt 2
-{
-  srf04_handle_interrupt();
-  timer_handle_interrupt();
-}
-
-
-static void int_setup(void)
-{
-  /* disable high prio ints */
-
-  RCONbits.IPEN = 0;
-  INTCONbits.PEIE = 1;
-  INTCONbits.GIE = 1;
-  INTCON2bits.RBIP = 0;
-}
 
 
 static void do_wait(void)

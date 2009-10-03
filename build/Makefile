@@ -2,7 +2,7 @@
 ## Made by fabien le mentec <texane@gmail.com>
 ## 
 ## Started on  Sun Sep 20 00:28:27 2009 texane
-## Last update Fri Oct  2 15:49:04 2009 texane
+## Last update Sat Oct  3 09:07:29 2009 texane
 ##
 
 
@@ -18,6 +18,7 @@ CFLAGS	:=	-mpic16						\
 		--model-large					\
 		-p18f4550 -Dpic18f4550				\
 		-DSDCC_PIC18 --mplab-comp			\
+		-DCONFIG_ENABLE_SCHED				\
 		-I../src					\
 		-I$(FREERTOS_SRC_DIR)/include			\
 		-I$(FREERTOS_SRC_DIR)/portable/SDCC/PIC18F	\
@@ -38,12 +39,15 @@ LIB	:=	gplib -c
 
 NAME	:=	dibal.hex
 
-CSRCS	:=	../src/main.c			\
-		../src/pwm.c			\
-		../src/adc.c			\
-		../src/srf04.c			\
-		../src/timer.c			\
-		../src/serial.c
+CSRCS	:=	../src/osc.c			\
+		../src/int.c			\
+		../src/sched.c
+#	../src/main.c			\
+# 		../src/pwm.c			\
+# 		../src/adc.c			\
+# 		../src/srf04.c			\
+# 		../src/timer.c			\
+# 		../src/serial.c
 ASRCS	:=
 
 OBJS	:=	$(CSRCS:.c=.o)			\
