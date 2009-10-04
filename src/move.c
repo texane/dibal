@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Oct  3 13:23:48 2009 texane
-** Last update Sat Oct  3 16:12:42 2009 texane
+** Last update Sun Oct  4 21:40:26 2009 texane
 */
 
 
@@ -13,7 +13,7 @@
 
 /* exported */
 
-void move_go_forwrad(void)
+void move_go_forward(void)
 {
   do_pwm(1);
   do_epwm(-1);

@@ -2,13 +2,11 @@
 ## Made by fabien le mentec <texane@gmail.com>
 ## 
 ## Started on  Sun Sep 20 00:28:27 2009 texane
-## Last update Sun Oct  4 05:19:37 2009 texane
+## Last update Sun Oct  4 21:43:17 2009 texane
 ##
 
 
 PATH	:=	$(PATH):/usr/share/pk2
-
-FREERTOS_SRC_DIR:=/home/texane/repo/freertos_pic18sdcc/Source
 
 
 CC	:=	/home/texane/proj/present/pic/18f4550/tools/sdcc/bin/sdcc
@@ -19,9 +17,9 @@ CFLAGS	:=	-mpic16						\
 		-p18f4550 -Dpic18f4550				\
 		-DSDCC_PIC18 --mplab-comp			\
 		-DCONFIG_ENABLE_SCHED				\
+		-DCONFIG_ENABLE_SRF04				\
+		-DCONFIG_ENABLE_TIMER				\
 		-I../src					\
-		-I$(FREERTOS_SRC_DIR)/include			\
-		-I$(FREERTOS_SRC_DIR)/portable/SDCC/PIC18F	\
 		 -Wa -DSDCC
 
 AS	:=	gpasm
@@ -39,13 +37,16 @@ LIB	:=	gplib -c
 
 NAME	:=	dibal.hex
 
-CSRCS	:=	../src/osc.c			\
+CSRCS	:=	../src/main.c			\
+		../src/osc.c			\
 		../src/int.c			\
 		../src/sched.c			\
 		../src/pwm.c			\
 		../src/adc.c			\
-		../src/light.c			\
+		../src/srf04.c			\
+		../src/timer.c			\
 		../src/move.c
+#		../src/light.c
 #		../src/serial.c			\
 #	../src/main.c			\
 # 		../src/adc.c			\

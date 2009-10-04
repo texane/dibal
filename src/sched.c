@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Fri Oct  2 21:28:28 2009 texane
-** Last update Sun Oct  4 03:59:31 2009 texane
+** Last update Sun Oct  4 22:29:07 2009 texane
 */
 
 
@@ -118,7 +118,7 @@ static void set_timer_freq(sched_timer_t* timer, unsigned int freq)
 
 /* exported */
 
-#define SCHED_TIMER_COUNT 4
+#define SCHED_TIMER_COUNT 8
 
 static struct sched_timer timers[SCHED_TIMER_COUNT];
 

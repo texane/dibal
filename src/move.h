@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Oct  3 16:17:24 2009 texane
-** Last update Sat Oct  3 16:18:10 2009 texane
+** Last update Sun Oct  4 21:40:19 2009 texane
 */
 
 
@@ -12,7 +12,7 @@
 
 
 
-void move_go_forwrad(void);
+void move_go_forward(void);
 void move_go_backward(void);
 void move_rotate_right(void);
 void move_rotate_left(void);
