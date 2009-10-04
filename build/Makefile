@@ -2,7 +2,7 @@
 ## Made by fabien le mentec <texane@gmail.com>
 ## 
 ## Started on  Sun Sep 20 00:28:27 2009 texane
-## Last update Sat Oct  3 13:28:03 2009 texane
+## Last update Sun Oct  4 05:19:37 2009 texane
 ##
 
 
@@ -44,6 +44,7 @@ CSRCS	:=	../src/osc.c			\
 		../src/sched.c			\
 		../src/pwm.c			\
 		../src/adc.c			\
+		../src/light.c			\
 		../src/move.c
 #		../src/serial.c			\
 #	../src/main.c			\
