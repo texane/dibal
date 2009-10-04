@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Oct  3 13:23:48 2009 texane
-** Last update Sat Oct  3 16:12:42 2009 texane
+** Last update Sat Oct  3 15:56:52 2009 texane
 */
 
 
@@ -49,7 +49,7 @@ void move_stop(void)
 
 
 
-#if 0 /* unit testing */
+#if 1 /* unit testing */
 
 
 #include <pic18fregs.h>
@@ -105,7 +105,7 @@ static void learn_octant(void)
 
   timer = sched_add_timer(2, wait_handler, 0);
 
-  for (count = 0; /* count < 10 */; ++count)
+  for (count = 0; count < 10; ++count)
     {
       move_rotate_right();
       wait_500ms(timer);
@@ -117,12 +117,12 @@ static void learn_octant(void)
       cur_level = adc_read(LIGHT_ADC_CHANNEL);
 
 #define QUANTIZE_5_10(V) ((unsigned short)(((V) * 1024.f) / 5.f))
-      if (ref_level > QUANTIZE_5_10(0.05))
-	min_level = ref_level - QUANTIZE_5_10(0.05);
+      if (ref_level > QUANTIZE_5_10(0.02))
+	min_level = ref_level - QUANTIZE_5_10(0.02);
       else
 	min_level = 0;
 
-      max_level = ref_level + QUANTIZE_5_10(0.05);
+      max_level = ref_level + QUANTIZE_5_10(0.02);
 
       if ((cur_level >= min_level) && (cur_level <= max_level))
 	break;
@@ -149,10 +149,7 @@ static void learn_octant(void)
       cur_level = adc_read(LIGHT_ADC_CHANNEL);
 
       if ((cur_level >= min_level) && (cur_level <= max_level))
-	{
-	  sched_disable_timer(timer);
-	  break;
-	}
+	break;
     }
 
   move_stop();
