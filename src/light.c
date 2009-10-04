@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Oct  3 16:14:50 2009 texane
-** Last update Sun Oct  4 04:04:52 2009 texane
+** Last update Sun Oct  4 04:24:34 2009 texane
 */
 
 
@@ -104,8 +104,8 @@ static void detect_light(void)
     {
       cur_level = adc_read(LIGHT_ADC_CHANNEL);
 
-      if (cur_level >= ADC_QUANTIZE_5_10(2.3))
-	if (cur_level <= ADC_QUANTIZE_5_10(2.7))
+      if (cur_level >= ADC_QUANTIZE_5_10(2.35))
+	if (cur_level <= ADC_QUANTIZE_5_10(2.65))
 	  return ;
 
       if (cur_level >= ADC_QUANTIZE_5_10(2.5))
@@ -143,6 +143,17 @@ void main(void)
   {
   redo:
     detect_light();
+
+    {
+      unsigned int i;
+
+      for (i = 0; i < 40000; ++i)
+	;
+
+      for (i = 0; i < 40000; ++i)
+	;
+    }
+
     goto redo;
   }
 }
