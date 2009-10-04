@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Oct  3 16:14:50 2009 texane
-** Last update Sat Oct  3 17:32:25 2009 texane
+** Last update Sun Oct  4 04:04:52 2009 texane
 */
 
 
@@ -33,36 +33,63 @@ static void wait_handler(void)
 static unsigned int delta_to_freq(unsigned short delta)
 {
 #define QUADRAN_FREQ 2
-  return (delta * QUADRAN_FREQ) / ADC_QUANTIZE_5_10(2.5);
+  return (QUADRAN_FREQ * ADC_QUANTIZE_5_10(2.5)) / delta;
 }
 
 
-static void wait_and_stop(unsigned int freq)
+static unsigned int freq_to_delta(unsigned int freq)
 {
+  return (QUADRAN_FREQ * ADC_QUANTIZE_5_10(2.5)) / freq;
+}
+
+
+static void wait_and_stop(unsigned short delta)
+{
+  /* waiting is wrapped inside a loop since the
+     delta to be waited for has to be translated
+     into a corresponding scheduler timer freq
+     and may be longer than the max sched freq
+  */
+
   sched_timer_t* timer;
+  unsigned int tmp;
 
-  is_done = 0;
+  timer = sched_add_timer(0, wait_handler, 0);
 
-  timer = sched_add_timer(freq, wait_handler, 1);
+  while (delta)
+    {
+      /* turn the remaining delta into a freq.
+	 resulting freq cannot be < 2 since
+	 delta <= 512 and go decreasing.
+      */
 
-  while (!is_done);
+      tmp = delta_to_freq(delta);
+      if (tmp > SCHED_MAX_FREQ)
+	tmp = SCHED_MAX_FREQ;
+
+      /* set the new timer freq */
+
+      sched_set_timer_freq(timer, tmp);
+
+      /* substract the delta that being waited for */
+
+      tmp = freq_to_delta(tmp);
+      if (tmp > delta)
+	tmp = delta;
+
+      delta -= tmp;
+
+      /* wait for the timer to fire */
+
+      is_done = 0;
+      sched_enable_timer(timer);
+      while (!is_done) ;
+      sched_disable_timer(timer);
+    }
 
   move_stop();
 
   sched_del_timer(timer);
-}
-
-
-static void wait_and_stop2(unsigned int cur_delta)
-{
-  /* small version. cur_delta <= 512. */
-
-  unsigned int i;
-
-  for (i = 0; i < cur_delta * 100; ++i)
-    __asm nop __endasm;
-
-  move_stop();
 }
 
 
@@ -72,7 +99,6 @@ static void detect_light(void)
   unsigned short cur_level;
   unsigned short prev_delta = ADC_MAX_VALUE;
   unsigned short cur_delta;
-  unsigned int freq;
 
   while (1)
     {
@@ -96,16 +122,11 @@ static void detect_light(void)
       if (prev_delta < cur_delta)
 	return ;
 
-      freq = delta_to_freq(cur_delta);
-
-      prev_delta = cur_delta;
-
       rotate();
 
-      if (freq)
-	wait_and_stop(freq);
-      else
-	wait_and_stop2(cur_delta);
+      wait_and_stop(cur_delta);
+
+      prev_delta = cur_delta;
     }
 }
 
