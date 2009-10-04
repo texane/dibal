@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Fri Oct  2 21:28:28 2009 texane
-** Last update Sat Oct  3 14:05:49 2009 texane
+** Last update Sun Oct  4 03:59:31 2009 texane
 */
 
 
@@ -38,7 +38,7 @@ struct sched_timer
 
 
 
-/* pic18f tmr0 */
+/* pic18f4550 tmr0 */
 
 static void rearm_tmr0(void)
 {
@@ -46,9 +46,8 @@ static void rearm_tmr0(void)
      in this order since writing the low
      part make the real update. */
 
-#define SCHED_FREQ 10
 #define TMR0_FREQ ((OSC_FREQ) / (4 * 256))
-#define TMR0_COUNTER ((0xffff) - TMR0_FREQ / SCHED_FREQ)
+#define TMR0_COUNTER ((0xffff) - TMR0_FREQ / SCHED_MAX_FREQ)
 
   TMR0H = (TMR0_COUNTER >> 8) & 0xff;
   TMR0L = (TMR0_COUNTER >> 0) & 0xff;
@@ -104,6 +103,16 @@ static unsigned char disable_tmr0_int(void)
 static void restore_tmr0_int(unsigned char prev_state)
 {
   INTCONbits.TMR0IE = prev_state;
+}
+
+
+/* wrapper */
+
+static void set_timer_freq(sched_timer_t* timer, unsigned int freq)
+{
+#define FREQ_TO_COUNTDOWN(F) ((SCHED_MAX_FREQ) / (F))
+  timer->current_countdown = FREQ_TO_COUNTDOWN(freq);
+  timer->saved_countdown = timer->current_countdown;
 }
 
 
@@ -168,9 +177,7 @@ sched_timer_t* sched_add_timer(unsigned int freq, void (*handler)(void), int is_
       return NULL;
     }
 
-#define FREQ_TO_COUNTDOWN(F) ((SCHED_FREQ) / (F))
-  timer->current_countdown = FREQ_TO_COUNTDOWN(freq);
-  timer->saved_countdown = timer->current_countdown;
+  set_timer_freq(timer, freq);
   timer->handler = handler;
 
   if (is_enabled)
@@ -185,6 +192,12 @@ void sched_del_timer(sched_timer_t* timer)
   /* todo: locking */
 
   TIMER_CLEAR_FLAG(timer, IS_ALLOCATED);
+}
+
+
+void sched_set_timer_freq(sched_timer_t* timer, unsigned int freq)
+{
+  set_timer_freq(timer, freq);
 }
 
 
