@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun Sep 20 14:08:30 2009 texane
-** Last update Sun Oct  4 23:26:32 2009 texane
+** Last update Mon Oct  5 08:33:48 2009 texane
 */
 
 
@@ -235,6 +235,24 @@ static void light_tracker_next(light_tracker_state_t* lts)
 }
 
 
+static void light_tracker_stop(light_tracker_state_t* lts)
+{
+  move_stop();
+
+  if (lts->timer != NULL)
+    {
+      sched_del_timer(lts->timer);
+      lts->timer = NULL;
+    }
+}
+
+
+static int light_tracker_is_done(light_tracker_state_t* lts)
+{
+  return lts->is_done;
+}
+
+
 
 /* object avoider behaviour */
 
@@ -282,6 +300,24 @@ static void object_avoider_next(object_avoider_state_t* oas)
 }
 
 
+static void object_avoider_stop(object_avoider_state_t* oas)
+{
+  move_stop();
+
+  if (oas->timer != NULL)
+    {
+      sched_del_timer(oas->timer);
+      oas->timer = NULL;
+    }
+}
+
+
+static int object_avoider_is_done(object_avoider_state_t* oas)
+{
+  return oas->is_done;
+}
+
+
 
 /* land explorer behaviour */
 
@@ -323,42 +359,179 @@ static void land_explorer_resume(land_explorer_state_t* les)
 }
 
 
+static int land_explorer_is_done(land_explorer_state_t* les)
+{
+  return les->is_done;
+}
+
+
 /* behaviour interface */
 
-struct behavior
+struct behavior_state
 {
 #define BEHAVIOR_ID_LAND_EXPLORER 0
 #define BEHAVIOR_ID_LIGHT_TRACKER 1
-#define BEHAVIOR_IDOBJECT_AVOIDER 2
+#define BEHAVIOR_ID_OBJECT_AVOIDER 2
+#define BEHAVIOR_ID_DEFAULT BEHAVIOR_ID_LAND_EXPLORER
   unsigned char id;
 
+  void (*next)(void*);
+  void (*stop)(void*);
+  int (*is_done)(void*);
+
+  void* statep;
+
+  union
+  {
+    land_explorer_state_t land_explorer;
+    object_avoider_state_t object_avoider;
+    light_tracker_state_t light_tracker;
+  } state;
 };
 
 
-typedef struct behavior behavior_t;
+typedef struct behavior_state behavior_state_t;
 
 
-static void fill_ops(struct behavior)
+static behavior_state_t current_behavior;
+
+
+static void clear_behavior(behavior_state_t* bs)
 {
+  bs->next = NULL;
+  bs->stop = NULL;
+  bs->is_done = NULL;
+
+  bs->statep = NULL;
 }
 
 
-static void behavior_init(behavior_t* b, unsigned char id)
+static void behavior_start(unsigned char id)
 {
-  b->id = id;
+  void (*init)(void*) = NULL;
+
+  clear_behavior(&current_behavior);
+
+  current_behavior.id = id;
+
+  /* fill dependant ops and data */
+
+  switch (id)
+    {
+    case BEHAVIOR_ID_LAND_EXPLORER:
+      {
+	current_behavior.next = (void(*)(void*))land_explorer_next;
+	current_behavior.stop = (void(*)(void*))land_explorer_stop;
+	current_behavior.is_done = (int(*)(void*))land_explorer_is_done;
+
+	current_behavior.statep = &current_behavior.state.land_explorer;
+
+	init = land_explorer_init;
+
+	break;
+      }
+
+    case BEHAVIOR_ID_LIGHT_TRACKER:
+      {
+	current_behavior.next = (void(*)(void*))light_tracker_next;
+	current_behavior.stop = (void(*)(void*))light_tracker_stop;
+	current_behavior.is_done = (int(*)(void*))light_tracker_is_done;
+
+	current_behavior.statep = &current_behavior.state.light_tracker;
+
+	init = light_tracker_init;
+
+	break;
+      }
+
+    case BEHAVIOR_ID_OBJECT_AVOIDER:
+      {
+	current_behavior.next = (void(*)(void*))object_avoider_next;
+	current_behavior.stop = (void(*)(void*))object_avoider_stop;
+	current_behavior.is_done = (int(*)(void*))object_avoider_is_done;
+
+	current_behavior.statep = &current_behavior.state.object_avoider;
+
+	init = object_avoider_init;
+
+	break;
+      }
+
+    default:
+      {
+	break;
+      }
+    }
+  
+  if (init != NULL)
+    init(current_behavior.statep);
 }
 
 
-static void behavior_switch(behavior_t* b, unsigned char id)
+static void behavior_stop(void)
 {
-  if (b->id == id)
-    return ;
-
-  if (b->stop != NULL)
-    b->stop();
+  if (current_behavior.stop != NULL)
+    current_behavior.stop(current_behavior.statep);
 }
 
 
+static int behavior_is_done(void)
+{
+  /* is the current behavior done */
+
+  if (current_behavior.is_done)
+    return current_behavior.is_done(current_behavior.statep);
+
+  return 0;
+}
+
+
+static unsigned int prio_by_id(unsigned char id)
+{
+  static unsigned char prio_table[] =
+    {
+#define BEHAVIOR_PRIO_LAND_EXPLORER 0
+#define BEHAVIOR_PRIO_LIGHT_TRACKER 1
+#define BEHAVIOR_PRIO_OBJECT_AVOIDER 2
+
+      BEHAVIOR_PRIO_LAND_EXPLORER,
+      BEHAVIOR_PRIO_LIGHT_TRACKER,
+      BEHAVIOR_PRIO_OBJECT_AVOIDER
+    };
+
+  return prio_table[id];
+}
+
+
+static void behavior_switch(unsigned char id)
+{
+  /* if the current behavior is done, dont
+     take into the account the priority and
+     dont stop it.
+   */
+
+  if (!behavior_is_done())
+    {
+      if (prio_by_id(id) < prio_by_id(current_behavior.id))
+	return ;
+
+      if (current_behavior.id != id)
+	behavior_stop();
+    }
+
+  /* start the new one */
+
+  behavior_start(id);
+}
+
+
+static void behavior_next(void)
+{
+  /* next behavior iter */
+
+  if (current_behavior.next != NULL)
+    current_behavior.next(current_behavior.statep);
+}
 
 
 /* main */
@@ -368,9 +541,8 @@ void main(void)
   sched_timer_t* light_timer;
   sched_timer_t* dist_timer;
 
-  land_explorer_state_t les;
-  object_avoider_state_t oas;
-  light_tracker_state_t lts;
+  unsigned char is_light_disabled;
+  unsigned char is_dist_disabled;
 
   osc_setup();
   int_setup();
@@ -380,12 +552,14 @@ void main(void)
   /* sensor timers */
 
   light_timer = sched_add_timer(1, on_light_timer, 1);
+  is_light_disabled = 0;
+
   dist_timer = sched_add_timer(2, on_distance_timer, 1);
+  is_dist_disabled = 0;
 
   /* default behaviour */
 
-  behaviour = BEHAVIOR_LAND_EXPLORER;
-  land_explorer_init(&les);
+  behavior_start(BEHAVIOR_ID_LAND_EXPLORER);
 
   /* main loop */
 
@@ -393,7 +567,11 @@ void main(void)
 
   while (1)
     {
-      /* sensors */
+      /* sensors. order matters so that object
+	 avoider takes priority over light tracker.
+	 this can be removed as soon as behavior
+	 priority is implemented.
+       */
 
       if (TIMER_MAP_ISSET(DISTANCE))
 	{
@@ -406,12 +584,9 @@ void main(void)
 	    if (dist <= MIN_DISTANCE_VALUE)
 	      {
 		sched_disable_timer(dist_timer);
+		is_dist_disabled = 1;
 
-		BEHAV_MAP_CLEAR(LAND_EXPLORER);
-		land_explorer_stop(&les);
-
-		BEHAV_MAP_SET(OBJECT_AVOIDER);
-		object_avoider_init(&oas);
+		behavior_switch(BEHAVIOR_ID_OBJECT_AVOIDER);
 	      }
 	  }
 	}
@@ -426,49 +601,36 @@ void main(void)
 	    if ((light <= ADC_QUANTIZE_5_10(2.35)) || (light >= ADC_QUANTIZE_5_10(2.65)))
 	      {
 		sched_disable_timer(light_timer);
+		is_light_disabled = 1;
 
-		BEHAV_MAP_SET(LIGHT_TRACKER);
-		light_tracker_init(&lts);
+		behavior_switch(BEHAVIOR_ID_LIGHT_TRACKER);
 	      }
 	  }
 	}
 
-      /* behaviors */
+      /* schedule behavior */
 
-      if (BEHAV_MAP_ISSET(OBJECT_AVOIDER))
+      behavior_next();
+
+      if (behavior_is_done())
 	{
-	  object_avoider_next(&oas);
+	  /* reenable timer */
 
-	  if (oas.is_done)
-	    {
-	      sched_enable_timer(dist_timer);
-
-	      BEHAV_MAP_CLEAR(OBJECT_AVOIDER);
-
-	      BEHAV_MAP_SET(LAND_EXPLORER);
-	      land_explorer_resume(&les);
-	    }
-	}
-
-      if (BEHAV_MAP_ISSET(LIGHT_TRACKER))
-	{
-	  light_tracker_next(&lts);
-
-	  if (lts.is_done)
+	  if (is_light_disabled)
 	    {
 	      sched_enable_timer(light_timer);
-
-	      BEHAV_MAP_CLEAR(LIGHT_TRACKER);
+	      is_light_disabled = 0;
 	    }
-	}
 
-      if (BEHAV_MAP_ISSET(LAND_EXPLORER))
-	{
-	  land_explorer_next(&les);
-	  if (les.is_done)
+	  if (is_dist_disabled)
 	    {
-	      BEHAV_MAP_CLEAR(LAND_EXPLORER);
+	      sched_enable_timer(dist_timer);
+	      is_dist_disabled = 0;
 	    }
+
+	  /* switch to default behavior */
+
+	  behavior_switch(BEHAVIOR_ID_DEFAULT);
 	}
     }
 }
