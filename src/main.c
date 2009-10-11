@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun Sep 20 14:08:30 2009 texane
-** Last update Mon Oct  5 08:33:48 2009 texane
+** Last update Sun Oct 11 07:58:19 2009 texane
 */
 
 
@@ -51,7 +51,6 @@ static void on_distance_timer(void)
 }
 
 
-
 /* light tracker behaviour */
 
 struct light_tracker_state
@@ -74,7 +73,7 @@ struct light_tracker_state
 typedef struct light_tracker_state light_tracker_state_t;
 
 
-static void light_tracker_init(light_tracker_state_t* lts)
+static void light_tracker_start(light_tracker_state_t* lts)
 {
   lts->is_done = 0;
 
@@ -87,6 +86,23 @@ static void light_tracker_init(light_tracker_state_t* lts)
 
   lts->prev_delta = ADC_MAX_VALUE;
   lts->rem_delta = 0;
+}
+
+
+static void light_tracker_stop(light_tracker_state_t* lts)
+{
+  if (lts->is_done)
+    return ;
+
+  move_stop();
+
+  if (lts->timer != NULL)
+    {
+      sched_del_timer(lts->timer);
+      lts->timer = NULL;
+    }
+
+  lts->is_done = 1;
 }
 
 
@@ -227,22 +243,10 @@ static void light_tracker_next(light_tracker_state_t* lts)
     case LIGHT_TRACKER_STATE_DONE:
     default:
       {
-	lts->is_done = 1;
+	light_tracker_stop(lts);
 
 	break;
       }
-    }
-}
-
-
-static void light_tracker_stop(light_tracker_state_t* lts)
-{
-  move_stop();
-
-  if (lts->timer != NULL)
-    {
-      sched_del_timer(lts->timer);
-      lts->timer = NULL;
     }
 }
 
@@ -266,7 +270,7 @@ struct object_avoider_state
 typedef struct object_avoider_state object_avoider_state_t;
 
 
-static void object_avoider_init(object_avoider_state_t* oas)
+static void object_avoider_start(object_avoider_state_t* oas)
 {
   oas->is_done = 0;
   oas->timer = NULL;
@@ -278,6 +282,23 @@ static volatile unsigned char is_rotate_done;
 static void on_rotate_timer(void)
 {
   is_rotate_done = 1;
+}
+
+
+static void object_avoider_stop(object_avoider_state_t* oas)
+{
+  if (oas->is_done)
+    return ;
+
+  move_stop();
+
+  if (oas->timer != NULL)
+    {
+      sched_del_timer(oas->timer);
+      oas->timer = NULL;
+    }
+
+  oas->is_done = 1;
 }
 
 
@@ -293,21 +314,7 @@ static void object_avoider_next(object_avoider_state_t* oas)
     }
   else if (is_rotate_done)
     {
-      sched_del_timer(oas->timer);
-      oas->timer = NULL;
-      oas->is_done = 1;
-    }
-}
-
-
-static void object_avoider_stop(object_avoider_state_t* oas)
-{
-  move_stop();
-
-  if (oas->timer != NULL)
-    {
-      sched_del_timer(oas->timer);
-      oas->timer = NULL;
+      object_avoider_stop(oas);
     }
 }
 
@@ -330,9 +337,10 @@ struct land_explorer_state
 typedef struct land_explorer_state land_explorer_state_t;
 
 
-static void land_explorer_init(land_explorer_state_t* les)
+static void land_explorer_start(land_explorer_state_t* les)
 {
   les->is_done = 0;
+
   move_go_forward();
 }
 
@@ -345,17 +353,9 @@ static void land_explorer_next(land_explorer_state_t* les)
 
 static void land_explorer_stop(land_explorer_state_t* les)
 {
-  les;
-
   move_stop();
-}
 
-
-static void land_explorer_resume(land_explorer_state_t* les)
-{
-  les;
-
-  move_go_forward();
+  les->is_done = 1;
 }
 
 
@@ -406,10 +406,16 @@ static void clear_behavior(behavior_state_t* bs)
 }
 
 
+static void behavior_setup(void)
+{
+  /* must be called before others */
+
+  clear_behavior(&current_behavior);
+}
+
+
 static void behavior_start(unsigned char id)
 {
-  void (*init)(void*) = NULL;
-
   clear_behavior(&current_behavior);
 
   current_behavior.id = id;
@@ -426,7 +432,7 @@ static void behavior_start(unsigned char id)
 
 	current_behavior.statep = &current_behavior.state.land_explorer;
 
-	init = land_explorer_init;
+	land_explorer_start(current_behavior.statep);
 
 	break;
       }
@@ -439,7 +445,7 @@ static void behavior_start(unsigned char id)
 
 	current_behavior.statep = &current_behavior.state.light_tracker;
 
-	init = light_tracker_init;
+	light_tracker_start(current_behavior.statep);
 
 	break;
       }
@@ -452,7 +458,7 @@ static void behavior_start(unsigned char id)
 
 	current_behavior.statep = &current_behavior.state.object_avoider;
 
-	init = object_avoider_init;
+	object_avoider_start(current_behavior.statep);
 
 	break;
       }
@@ -462,16 +468,43 @@ static void behavior_start(unsigned char id)
 	break;
       }
     }
-  
-  if (init != NULL)
-    init(current_behavior.statep);
 }
 
 
 static void behavior_stop(void)
 {
+#if 0
+
   if (current_behavior.stop != NULL)
     current_behavior.stop(current_behavior.statep);
+
+#else
+
+  switch (current_behavior.id)
+    {
+    case BEHAVIOR_ID_LAND_EXPLORER:
+      {
+	land_explorer_stop(current_behavior.statep);
+	break;
+      }
+
+    case BEHAVIOR_ID_LIGHT_TRACKER:
+      {
+	light_tracker_stop(current_behavior.statep);
+	break;
+      }
+
+    case BEHAVIOR_ID_OBJECT_AVOIDER:
+      {
+	object_avoider_stop(current_behavior.statep);
+	break;
+      }
+
+    default:
+      break;
+    }
+
+#endif
 }
 
 
@@ -479,10 +512,42 @@ static int behavior_is_done(void)
 {
   /* is the current behavior done */
 
-  if (current_behavior.is_done)
+#if 0
+
+  if (current_behavior.is_done != NULL)
     return current_behavior.is_done(current_behavior.statep);
 
   return 0;
+
+#else
+
+  switch (current_behavior.id)
+    {
+    case BEHAVIOR_ID_LAND_EXPLORER:
+      {
+	return land_explorer_is_done(current_behavior.statep);
+	break;
+      }
+
+    case BEHAVIOR_ID_LIGHT_TRACKER:
+      {
+	return light_tracker_is_done(current_behavior.statep);
+	break;
+      }
+
+    case BEHAVIOR_ID_OBJECT_AVOIDER:
+      {
+	return object_avoider_is_done(current_behavior.statep);
+	break;
+      }
+
+    default:
+      break;
+    }
+
+  return 0;
+
+#endif
 }
 
 
@@ -503,7 +568,7 @@ static unsigned int prio_by_id(unsigned char id)
 }
 
 
-static void behavior_switch(unsigned char id)
+static int behavior_switch(unsigned char id)
 {
   /* if the current behavior is done, dont
      take into the account the priority and
@@ -513,15 +578,16 @@ static void behavior_switch(unsigned char id)
   if (!behavior_is_done())
     {
       if (prio_by_id(id) < prio_by_id(current_behavior.id))
-	return ;
+	return -1;
 
-      if (current_behavior.id != id)
-	behavior_stop();
+      behavior_stop();
     }
 
   /* start the new one */
 
   behavior_start(id);
+
+  return 0;
 }
 
 
@@ -529,9 +595,40 @@ static void behavior_next(void)
 {
   /* next behavior iter */
 
+#if 0
+
   if (current_behavior.next != NULL)
     current_behavior.next(current_behavior.statep);
+
+#else
+
+  switch (current_behavior.id)
+    {
+    case BEHAVIOR_ID_LAND_EXPLORER:
+      {
+	land_explorer_next(current_behavior.statep);
+	break;
+      }
+
+    case BEHAVIOR_ID_LIGHT_TRACKER:
+      {
+	light_tracker_next(current_behavior.statep);
+	break;
+      }
+
+    case BEHAVIOR_ID_OBJECT_AVOIDER:
+      {
+	object_avoider_next(current_behavior.statep);
+	break;
+      }
+
+    default:
+      break;
+    }
+
+#endif
 }
+
 
 
 /* main */
@@ -540,14 +637,18 @@ void main(void)
 {
   sched_timer_t* light_timer;
   sched_timer_t* dist_timer;
+  sched_timer_t* ser_timer;
 
   unsigned char is_light_disabled;
   unsigned char is_dist_disabled;
 
   osc_setup();
   int_setup();
+
   srf04_setup();
   sched_setup();
+
+  behavior_setup();
 
   /* sensor timers */
 
@@ -575,37 +676,41 @@ void main(void)
 
       if (TIMER_MAP_ISSET(DISTANCE))
 	{
-	  TIMER_MAP_CLEAR(DISTANCE);
-
 	  {
 	    unsigned int dist = srf04_get_distance();
 
 #define MIN_DISTANCE_VALUE 0x0a00 /* 20 cms */
 	    if (dist <= MIN_DISTANCE_VALUE)
 	      {
-		sched_disable_timer(dist_timer);
-		is_dist_disabled = 1;
-
-		behavior_switch(BEHAVIOR_ID_OBJECT_AVOIDER);
+		if (behavior_switch(BEHAVIOR_ID_OBJECT_AVOIDER) != -1)
+		  {
+		    sched_disable_timer(dist_timer);
+		    is_dist_disabled = 1;
+		  }
 	      }
 	  }
+
+	  /* clear after the timer may have been disabled */
+
+	  TIMER_MAP_CLEAR(DISTANCE);
 	}
 
       if (TIMER_MAP_ISSET(LIGHT))
 	{
-	  TIMER_MAP_CLEAR(LIGHT);
-
 	  {
 	    unsigned short light = adc_read(LIGHT_ADC_CHANNEL);
 
 	    if ((light <= ADC_QUANTIZE_5_10(2.35)) || (light >= ADC_QUANTIZE_5_10(2.65)))
 	      {
-		sched_disable_timer(light_timer);
-		is_light_disabled = 1;
-
-		behavior_switch(BEHAVIOR_ID_LIGHT_TRACKER);
+		if (behavior_switch(BEHAVIOR_ID_LIGHT_TRACKER) != -1)
+		  {
+		    sched_disable_timer(light_timer);
+		    is_light_disabled = 1;
+		  }
 	      }
 	  }
+
+	  TIMER_MAP_CLEAR(LIGHT);
 	}
 
       /* schedule behavior */

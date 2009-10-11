@@ -2,7 +2,7 @@
 ## Made by fabien le mentec <texane@gmail.com>
 ## 
 ## Started on  Sun Sep 20 00:28:27 2009 texane
-## Last update Sun Oct  4 21:43:17 2009 texane
+## Last update Sun Oct 11 07:32:07 2009 texane
 ##
 
 
@@ -46,13 +46,9 @@ CSRCS	:=	../src/main.c			\
 		../src/srf04.c			\
 		../src/timer.c			\
 		../src/move.c
+#		../src/serial.c
 #		../src/light.c
-#		../src/serial.c			\
-#	../src/main.c			\
-# 		../src/adc.c			\
-# 		../src/srf04.c			\
-# 		../src/timer.c			\
-# 		../src/serial.c
+#		../src/serial.c
 ASRCS	:=
 
 OBJS	:=	$(CSRCS:.c=.o)			\

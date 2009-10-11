@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Fri Oct  2 21:28:28 2009 texane
-** Last update Sun Oct  4 22:29:07 2009 texane
+** Last update Sun Oct 11 06:46:02 2009 texane
 */
 
 
@@ -231,8 +231,6 @@ void sched_handle_interrupt(void)
 
   INTCONbits.TMR0IF = 0;
 
-  rearm_tmr0();
-
   for (timer = timers, i = 0; i < SCHED_TIMER_COUNT; ++i, ++timer)
     {
       if ( ! TIMER_HAS_FLAGS2(timer, IS_ALLOCATED, IS_ENABLED) )
@@ -245,6 +243,8 @@ void sched_handle_interrupt(void)
 
       timer->current_countdown = timer->saved_countdown;
     }
+
+  rearm_tmr0();
 }
 
 

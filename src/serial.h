@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Mon Sep 21 08:51:53 2009 texane
-** Last update Sat Oct  3 10:45:59 2009 texane
+** Last update Sun Oct 11 06:10:49 2009 texane
 */
 
 
@@ -18,6 +18,8 @@ void serial_read(unsigned char*, unsigned char);
 void serial_write(unsigned char*, unsigned char);
 void serial_writei(unsigned int);
 void serial_writeb(unsigned char);
+
+#define serial_writep(P) do { serial_writei((unsigned int)(P)); } while (0)
 
 
 

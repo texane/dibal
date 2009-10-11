@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Oct  3 07:05:54 2009 texane
-** Last update Sat Oct  3 10:47:12 2009 texane
+** Last update Sun Oct 11 07:31:48 2009 texane
 */
 
 
@@ -54,10 +54,26 @@ void int_setup(void)
 {
   /* disable high prio ints */
 
+  RCON = 0;
+  INTCON = 0;
+  INTCON2 = 0;
+
   RCONbits.IPEN = 0;
+
   INTCONbits.PEIE = 1;
   INTCONbits.GIE = 1;
+
   INTCON2bits.RBIP = 0;
+
+  /* to remove */
+  {
+    unsigned int i;
+
+    for (i = 0; i < 1000; ++i)
+      __asm nop __endasm;
+  }
+  /* to remove */
+
 }
 
 

@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun May 31 01:58:07 2009 texane
-** Last update Sun Sep 27 19:37:08 2009 texane
+** Last update Sat Oct 10 22:02:37 2009 texane
 */
 
 
@@ -60,8 +60,6 @@ void timer_loop(unsigned int usecs)
       PIE1bits.TMR1IE = 1; /* release */
     }
 
-  OSCCONbits.SCS = 2; /* restore internal osc clock */
-
   T1CONbits.TMR1ON = 0; /* disable timer1 */
 }
 
@@ -71,8 +69,6 @@ unsigned int timer_stop(void)
   unsigned int n;
 
   n = (TMR1H << 8) | TMR1L;
-
-  OSCCONbits.SCS = 2;
 
   T1CONbits.TMR1ON = 0;
 
