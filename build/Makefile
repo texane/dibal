@@ -2,7 +2,7 @@
 ## Made by fabien le mentec <texane@gmail.com>
 ## 
 ## Started on  Sun Sep 20 00:28:27 2009 texane
-## Last update Sun Oct 11 07:32:07 2009 texane
+## Last update Mon Oct 12 10:48:14 2009 texane
 ##
 
 
@@ -18,7 +18,6 @@ CFLAGS	:=	-mpic16						\
 		-DSDCC_PIC18 --mplab-comp			\
 		-DCONFIG_ENABLE_SCHED				\
 		-DCONFIG_ENABLE_SRF04				\
-		-DCONFIG_ENABLE_TIMER				\
 		-I../src					\
 		 -Wa -DSDCC
 
@@ -44,7 +43,6 @@ CSRCS	:=	../src/main.c			\
 		../src/pwm.c			\
 		../src/adc.c			\
 		../src/srf04.c			\
-		../src/timer.c			\
 		../src/move.c
 #		../src/serial.c
 #		../src/light.c

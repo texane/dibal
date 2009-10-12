@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun Sep 20 14:08:30 2009 texane
-** Last update Sun Oct 11 07:58:19 2009 texane
+** Last update Mon Oct 12 10:49:25 2009 texane
 */
 
 
@@ -348,6 +348,16 @@ static void land_explorer_start(land_explorer_state_t* les)
 static void land_explorer_next(land_explorer_state_t* les)
 {
   les;
+
+  /* we have to do it here since this is
+     the only place we know there is room
+     for sleeping without blocking any next
+     function. idle mode chosen so that timers
+     related events continue to occur, pwms
+     signals to be generated...
+   */
+
+  osc_set_power(OSC_PMODE_IDLE);
 }
 
 
@@ -637,7 +647,6 @@ void main(void)
 {
   sched_timer_t* light_timer;
   sched_timer_t* dist_timer;
-  sched_timer_t* ser_timer;
 
   unsigned char is_light_disabled;
   unsigned char is_dist_disabled;
@@ -652,7 +661,7 @@ void main(void)
 
   /* sensor timers */
 
-  light_timer = sched_add_timer(1, on_light_timer, 1);
+  light_timer = sched_add_timer(2, on_light_timer, 1);
   is_light_disabled = 0;
 
   dist_timer = sched_add_timer(2, on_distance_timer, 1);
@@ -677,9 +686,9 @@ void main(void)
       if (TIMER_MAP_ISSET(DISTANCE))
 	{
 	  {
-	    unsigned int dist = srf04_get_distance();
-
 #define MIN_DISTANCE_VALUE 0x0a00 /* 20 cms */
+	    unsigned int dist = srf04_get_distance(MIN_DISTANCE_VALUE);
+
 	    if (dist <= MIN_DISTANCE_VALUE)
 	      {
 		if (behavior_switch(BEHAVIOR_ID_OBJECT_AVOIDER) != -1)

@@ -2,7 +2,7 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sat Oct  3 07:05:54 2009 texane
-** Last update Sun Oct 11 07:31:48 2009 texane
+** Last update Mon Oct 12 10:48:40 2009 texane
 */
 
 
@@ -17,15 +17,6 @@
 # include "serial.h"
 #endif
 
-#ifdef CONFIG_ENABLE_TIMER
-# include "timer.h"
-#endif
-
-#ifdef CONFIG_ENABLE_SRF04
-# include "srf04.h"
-#endif
-
-
 
 void on_low_interrupt(void) __interrupt 2;
 
@@ -34,14 +25,6 @@ void on_low_interrupt(void) __interrupt 2
 {
 #ifdef CONFIG_ENABLE_SCHED
   sched_handle_interrupt();
-#endif
-
-#ifdef CONFIG_ENABLE_SRF04
-  srf04_handle_interrupt();
-#endif
-
-#ifdef CONFIG_ENABLE_TIMER
-  timer_handle_interrupt();
 #endif
 
 #ifdef CONFIG_ENABLE_SERIAL

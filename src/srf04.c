@@ -2,34 +2,86 @@
 ** Made by fabien le mentec <texane@gmail.com>
 ** 
 ** Started on  Sun Jun  7 09:36:34 2009 texane
-** Last update Sun Sep 27 19:36:43 2009 texane
+** Last update Mon Oct 12 10:50:30 2009 texane
 */
 
 
 
 #include <pic18fregs.h>
-#include "./serial.h"
-#include "./timer.h"
+#include "srf04.h"
 
 
 
-enum srf04_state
-  {
-    SRF04_STATE_TRIGGER = 0,
-    SRF04_STATE_WAIT_ECHO_HIGH,
-    SRF04_STATE_WAIT_ECHO_LOW,
-    SRF04_STATE_DONE
-  };
+/* pic18f4550 timer1 */
+
+static unsigned int tmr1_read(void)
+{
+  return (TMR1H << 8) | TMR1L;
+}
 
 
-volatile enum srf04_state srf04_state;
+static void tmr1_stop(void)
+{
+  T1CONbits.TMR1ON = 0;
+  PIR1bits.TMR1IF = 0;
+}
 
 
-/* #define SRF04_TRIGGER_PIN LATBbits.LATB0 */
+static void tmr1_start(unsigned int counter)
+{
+  T1CONbits.TMR1ON = 0; /* disable timer1 */
+
+  PIE1bits.TMR1IE = 0;
+  PIR1bits.TMR1IF = 0;
+
+  T1CONbits.RD16 = 0; /* read/write in 2 8 bits operations */
+
+  T1CONbits.T1CKPS0 = 0; /* 1:1 prescaler */  
+  T1CONbits.T1CKPS1 = 0; /* 1:1 prescaler */  
+  T1CONbits.T1OSCEN = 0; /* t1 osc shut off */
+  T1CONbits.TMR1CS = 0; /* internal clock */
+
+  TMR1H = (counter >> 8) & 0xff;
+  TMR1L = (counter >> 0) & 0xff;
+
+  T1CONbits.TMR1ON = 1; /* enable timer1 */
+}
+
+
+static void tmr1_loop(unsigned int usecs)
+{
+  /* the timer is set to be incremented at
+     each insn cycle. an instruction cycle
+     occurs at fosc / 4. at a fosc of 8mhz
+     there are 2 insns per micro seconds.
+   */
+
+  tmr1_start(0xffff - usecs * 2);
+
+  /* wait for interrupt */
+
+  while (1)
+    {
+      if (PIR1bits.TMR1IF)
+	{
+	  PIR1bits.TMR1IF = 0;
+	  break;
+	}
+    }
+
+  /* disable timer */
+
+  tmr1_stop();
+}
+
+
+/* pins */
+
 #define SRF04_TRIGGER_PIN PORTBbits.RB0
 #define SRF04_ECHO_PIN PORTBbits.RB1
 
 
+/* exported */
 
 void srf04_setup(void)
 {
@@ -43,88 +95,46 @@ void srf04_setup(void)
 }
 
 
-
-/* static void write_int(int n) */
-/* { */
-/*   serial_write((const void*)&n, sizeof(n)); */
-/* } */
-
-
-
-unsigned int srf04_get_distance(void)
+unsigned int srf04_get_distance(unsigned int limit)
 {
-  unsigned int n;
-
-  srf04_state = SRF04_STATE_TRIGGER;
+  unsigned int counter = 0xffff - limit;
+  unsigned int dist = SRF04_INVALID_DISTANCE;
 
   SRF04_ECHO_PIN = 0;
-
-  /* enable interrupt */
-
-  INTCONbits.RBIE = 1;
 
   /* trigger pulse 10us (8mhz) */
 
   SRF04_TRIGGER_PIN = 0;
   SRF04_TRIGGER_PIN = 1;
 
-  timer_loop(10);
+  tmr1_loop(10);
 
   SRF04_TRIGGER_PIN = 0;
 
   while (!SRF04_ECHO_PIN)
     ;
 
-  timer_start();
+  /* set timer to the limit value. if a timeroverflow
+     occurs prior the pin level changes, then limit
+     is reached and invalid distance returned */
 
-  while (SRF04_ECHO_PIN)
-    ;
+  tmr1_start(counter);
 
-  n = timer_stop();
-
-  /* at 8mhz, 2000000 cycles per sec */
-
-/*   while (srf04_state <= SRF04_STATE_WAIT_ECHO_LOW) */
-/*     ; */
-
-/*   for (n = 0; srf04_state != SRF04_STATE_DONE; ++n) */
-/*     ; */
-
-  INTCONbits.RBIE = 0;
-
-  return n;
-}
-
-
-int srf04_handle_interrupt(void)
-{
-  unsigned char value;
-
-  if (!INTCONbits.RBIF)
-    return -1;
-
-  switch (srf04_state)
+  while (1)
     {
-    case SRF04_STATE_TRIGGER:
-      srf04_state = SRF04_STATE_WAIT_ECHO_HIGH;
-      break;
+      if (!SRF04_ECHO_PIN)
+	{
+	  dist = tmr1_read() - counter;
+	  break;
+	}
 
-    case SRF04_STATE_WAIT_ECHO_HIGH:
-      srf04_state = SRF04_STATE_WAIT_ECHO_LOW;
-      break;
+      /* limit reached */
 
-    case SRF04_STATE_WAIT_ECHO_LOW:
-      srf04_state = SRF04_STATE_DONE;
-      break;
-
-    default:
-      srf04_state = SRF04_STATE_DONE;
-      break;
+      if (PIR1bits.TMR1IF)
+	break;
     }
 
-  value = PORTB;
+  tmr1_stop();
 
-  INTCONbits.RBIF = 0;
-
-  return 0;
+  return dist;
 }
